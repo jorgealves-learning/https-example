@@ -1,0 +1,26 @@
+services:
+  traefik:
+    image: traefik:v2.10
+    command:
+      - "--entrypoints.websecure.address=:443"
+      - "--providers.docker=true"
+      - "--certificatesresolvers.local.acme.tlschallenge=true"
+    ports:
+      - "443:443"
+    volumes:
+      - ./traefik.yaml:/etc/traefik/traefik.yaml:ro
+      - ./certs:/etc/traefik/certs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  app:
+    image: nginx:latest
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app.rule=Host(`traefik.local`)"
+      - "traefik.http.routers.app.entrypoints=websecure"
+      - "traefik.http.routers.app.tls.certresolver=local"
+    volumes:
+      - ./html:/usr/share/nginx/html:ro
+    expose:
+      - "80"
+
